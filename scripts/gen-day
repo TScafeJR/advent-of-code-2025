@@ -1,0 +1,148 @@
+#!/bin/bash
+
+MOD_FILE="src/days/mod.rs"
+
+err_print() {
+	echo -e "\033[31m$1\033[0m" 1>&2
+}
+
+read -p "Enter day name: " -r DAY_NAME
+
+if [[ -z "$DAY_NAME" ]]; then
+	err_print "Day name cannot be empty!"
+	exit 1
+fi
+
+mkdir -p "src/days/$DAY_NAME/data" || {
+	err_print "Failed to create directory!"
+	exit 1
+}
+
+touch "src/days/$DAY_NAME/data/input.txt" || {
+	err_print "Failed to create input.txt"
+	exit 1
+}
+
+touch "src/days/$DAY_NAME/data/test.txt" || {
+	err_print "Failed to create test.txt"
+	exit 1
+}
+
+touch "src/days/$DAY_NAME/mod.rs" || {
+	err_print "Failed to create mod.rs"
+	exit 1
+}
+
+cat >"src/days/$DAY_NAME/mod.rs" <<EOF
+pub mod main;
+pub mod test;
+
+pub use main::functions;
+EOF
+
+touch "src/days/$DAY_NAME/main.rs"
+touch "src/days/$DAY_NAME/test.rs"
+
+cat >"src/days/$DAY_NAME/main.rs" <<EOF
+use crate::days::Day;
+
+fn part1(_data: Vec<String>) -> u64 {
+    0
+}
+
+fn part2(_data: Vec<String>) -> u64 {
+    0
+}
+
+pub fn functions() -> Day {
+    Day {
+        part1: Some(part1),
+        part2: Some(part2),
+    }
+}
+EOF
+
+cat >"src/days/$DAY_NAME/test.rs" <<EOF
+#[cfg(test)]
+use crate::util;
+#[cfg(test)]
+use std::path::PathBuf;
+#[cfg(test)]
+use crate::days;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn get_data() -> Vec<String> {
+        let data_path = PathBuf::from(format!("src/days/{}/data/test.txt", "$DAY_NAME"));
+        util::files::read_file_line_by_line(data_path)
+    }
+
+    #[ignore]
+    #[test]
+    fn p1() {
+        if let Some(day) = days::get_day_from_str("$DAY_NAME") {
+            if let Some(parsed_fns) = days::get_day(day) {
+                if let Some(part1_fn) = parsed_fns.part1 {
+                    let result = part1_fn(get_data());
+                    assert_eq!(result, 1);
+                    return
+                } 
+
+                panic!("Part 1 is not supported.");
+            } else {
+                panic!("Part 1 is not supported.");
+            }
+        } else {
+            panic!("Day {} is not supported.", "$DAY_NAME");
+        }
+    }
+
+    #[ignore]
+    #[test]
+    fn p2() {
+        if let Some(day) = days::get_day_from_str("$DAY_NAME") {
+            if let Some(parsed_fns) = days::get_day(day) {
+                if let Some(part2_fn) = parsed_fns.part2 {
+                    let result = part2_fn(get_data());
+                    assert_eq!(result, 1);
+                    return
+                } 
+
+                panic!("Part 2 is not supported.");
+            } else {
+                panic!("Part 2 is not supported.");
+            }
+        } else {
+            panic!("Day {} is not supported.", "$DAY_NAME");
+        }
+    }
+}
+
+EOF
+
+if ! grep -q "pub mod $DAY_NAME;" "$MOD_FILE"; then
+	sed -i '' "1i\\
+pub mod $DAY_NAME;
+" "$MOD_FILE"
+fi
+
+if ! grep -q "\"$DAY_NAME\".to_string()" "$MOD_FILE"; then
+	sed -i '' "/pub fn get_day_str(day: u8) -> Option<String> {/,/}/ s/        _ => None,/        $(($(grep -c '^pub mod' "$MOD_FILE"))) => Some(\"$DAY_NAME\".to_string()),\\
+        _ => None,/" "$MOD_FILE"
+fi
+
+if ! grep -q "$DAY_NAME::functions()" "$MOD_FILE"; then
+	sed -i '' "/pub fn get_day(day: u8) -> Option<Day> {/,/}/ s/        _ => None,/        $(($(grep -c '^pub mod' "$MOD_FILE"))) => Some($DAY_NAME::functions()),\\
+        _ => None,/" "$MOD_FILE"
+fi
+
+if ! grep -q "\"$DAY_NAME\" => Some(" "$MOD_FILE"; then
+	sed -i '' "/pub fn get_day_from_str(day: &str) -> Option<u8> {/,/}/ s/        _ => None,/        \"$DAY_NAME\" => Some($(($(grep -c '^pub mod' "$MOD_FILE")))),\\
+        _ => None,/" "$MOD_FILE"
+fi
+
+make fix
+
+git add "src/days/$DAY_NAME"
