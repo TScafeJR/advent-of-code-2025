@@ -1,4 +1,4 @@
-## Advent of Code 2024 in Rust
+## Advent of Code 2025 in Rust
 
 Taking a stab at this in rust this year.
 
@@ -20,4 +20,4 @@ make gen-day
 ```
 
 <b>Note for self:</b>
-On my personal machine, I'm storing this project in `/Users/<usr>/rust/code-advent-2024`.
+On my personal machine, I'm storing this project in `/Users/<usr>/code/advent_of_code/2025`.
