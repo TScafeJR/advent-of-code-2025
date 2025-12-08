@@ -45,8 +45,59 @@ fn part1(data: Vec<String>) -> u64 {
     result
 }
 
-fn part2(_data: Vec<String>) -> u64 {
-    0
+fn whole_column_empty(g: &Vec<Vec<char>>, x: usize) -> bool {
+    for y in 0..g.len() {
+        if g[y][x] != ' ' {
+            return false;
+        }
+    }
+    true
+}
+
+fn is_operator(c: char) -> bool {
+    c == '+' || c == '*'
+}
+
+fn part2(data: Vec<String>) -> u64 {
+    let g: Vec<Vec<char>> = data.into_iter().map(|x| x.chars().collect()).collect();
+    let mut result = 0;
+    let mut curr_digits_vec: Vec<u64> = Vec::new();
+    let mut operator = '+';
+
+    for x in 0..g[0].len() {
+        if whole_column_empty(&g, x) {
+            result += handle_operation(curr_digits_vec.to_vec(), operator);
+            curr_digits_vec.clear();
+            continue;
+        }
+
+        let mut curr_digit = String::new();
+
+        for y in 0..g.len() {
+            let curr_char = g[y][x];
+
+            if curr_char.is_digit(10) {
+                curr_digit.push_str(&curr_char.to_string());
+            } else if is_operator(curr_char) {
+                operator = curr_char;
+                if !curr_digit.is_empty() {
+                    let digit: u64 = curr_digit.parse().unwrap();
+                    curr_digits_vec.push(digit);
+                    curr_digit.clear();
+                }
+            } else {
+                if !curr_digit.is_empty() {
+                    let digit: u64 = curr_digit.parse().unwrap();
+                    curr_digits_vec.push(digit);
+                    curr_digit.clear();
+                }
+            }
+        }
+    }
+
+    result += handle_operation(curr_digits_vec.to_vec(), operator);
+
+    result
 }
 
 pub fn functions() -> Day {

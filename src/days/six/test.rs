@@ -33,14 +33,13 @@ mod tests {
         }
     }
 
-    #[ignore]
     #[test]
     fn p2() {
         if let Some(day) = days::get_day_from_str("six") {
             if let Some(parsed_fns) = days::get_day(day) {
                 if let Some(part2_fn) = parsed_fns.part2 {
                     let result = part2_fn(get_data());
-                    assert_eq!(result, 1);
+                    assert_eq!(result, 3263827);
                     return;
                 }
 
