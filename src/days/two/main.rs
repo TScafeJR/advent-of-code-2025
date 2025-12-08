@@ -1,13 +1,20 @@
 use crate::days::Day;
-use regex::Regex;
+use crate::util::range;
 use std::collections::HashSet;
 
-type ValidatorFn = fn(n: u64) -> bool;
+impl range::Range {
+    pub fn find_duplicates(&self) -> Vec<u64> {
+        let mut d = Vec::new();
 
-struct Range {
-    pub low: u64,
-    pub high: u64,
-    validator: ValidatorFn,
+        for n in self.low..self.high + 1 {
+            let is_valid = self.validator.map_or(true, |f| f(n));
+
+            if is_valid {
+                d.push(n)
+            }
+        }
+        d
+    }
 }
 
 pub fn get_factors(n: u64) -> Vec<u64> {
@@ -68,43 +75,13 @@ pub fn is_invalid_p2(n: u64) -> bool {
     return false;
 }
 
-impl Range {
-    pub fn new(s: &str, validator_fn: ValidatorFn) -> Self {
-        let re = Regex::new(r"(\d+)-(\d+)").unwrap();
-        let mut h = 0;
-        let mut l = 0;
-
-        for cap in re.captures_iter(&s) {
-            l = cap[1].parse().unwrap();
-            h = cap[2].parse().unwrap();
-        }
-
-        Range {
-            low: l,
-            high: h,
-            validator: validator_fn,
-        }
-    }
-
-    pub fn find_duplicates(&self) -> Vec<u64> {
-        let mut d = Vec::new();
-
-        for n in self.low..self.high + 1 {
-            if (self.validator)(n) {
-                d.push(n)
-            }
-        }
-        d
-    }
-}
-
 fn part1(data: Vec<String>) -> u64 {
     let mut sum = 0;
 
     for i in 0..data.len() {
         let s = data[i].split(",");
         for entry in s {
-            let r = Range::new(entry, is_invalid);
+            let r = range::Range::with_validator(entry, is_invalid);
             let d = r.find_duplicates();
             for j in 0..d.len() {
                 sum += d[j]
@@ -121,7 +98,7 @@ fn part2(data: Vec<String>) -> u64 {
     for i in 0..data.len() {
         let s = data[i].split(",");
         for entry in s {
-            let r = Range::new(entry, is_invalid_p2);
+            let r = range::Range::with_validator(entry, is_invalid_p2);
             let d = r.find_duplicates();
             for j in 0..d.len() {
                 sum += d[j]
