@@ -13,7 +13,6 @@ impl Distance {
     }
 }
 
-// Implement Total Ordering for sorting
 impl PartialEq for Distance {
     fn eq(&self, other: &Self) -> bool {
         self.units == other.units
@@ -29,7 +28,6 @@ impl PartialOrd for Distance {
 
 impl Ord for Distance {
     fn cmp(&self, other: &Self) -> Ordering {
-        // Use total_cmp for safe float sorting
         self.units.total_cmp(&other.units)
     }
 }
@@ -70,8 +68,6 @@ struct Edge {
     dist: Distance,
 }
 
-// --- UNION FIND ---
-
 struct UnionFind {
     parent: Vec<usize>,
     size: Vec<usize>,
@@ -108,6 +104,12 @@ impl UnionFind {
                 self.size[root_i] += self.size[root_j];
             }
         }
+    }
+
+    fn all_connected(&mut self) -> bool {
+        let total_nodes = self.parent.len();
+        let root = self.find(0);
+        self.size[root] == total_nodes
     }
 }
 
@@ -158,7 +160,45 @@ fn part1(data: Vec<String>) -> u64 {
     circuit_sizes.iter().take(3).product::<usize>() as u64
 }
 
-fn part2(_data: Vec<String>) -> u64 {
+fn part2(data: Vec<String>) -> u64 {
+    if data.is_empty() {
+        return 0;
+    }
+
+    let points: Vec<Point> = data.into_iter().map(|s| Point::from_str(&s)).collect();
+    let n = points.len();
+
+    let mut edges: Vec<Edge> = Vec::with_capacity(n * n / 2);
+    for i in 0..n {
+        for j in (i + 1)..n {
+            edges.push(Edge {
+                p1_idx: i,
+                p2_idx: j,
+                dist: points[i].dist(&points[j]),
+            });
+        }
+    }
+
+    edges.sort_by(|a, b| a.dist.cmp(&b.dist));
+
+    let mut uf = UnionFind::new(n);
+
+    for edge in edges {
+        let root_a = uf.find(edge.p1_idx);
+        let root_b = uf.find(edge.p2_idx);
+
+        if root_a != root_b {
+            uf.union(edge.p1_idx, edge.p2_idx);
+
+            if uf.all_connected() {
+                let p1 = &points[edge.p1_idx];
+                let p2 = &points[edge.p2_idx];
+
+                return (p1.x * p2.x) as u64;
+            }
+        }
+    }
+
     0
 }
 
